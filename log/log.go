@@ -78,15 +78,6 @@ func applyGlobalHanldes() {
 	Dump    = Root.Dump
 }
 
-func Stringify(arg interface{}) string {
-	switch v := arg.(type) {
-	case string:
-		return v
-	default:
-		return fmt.Sprintf("%v", arg)
-	}
-}
-
 func Format(msg string, args ...interface{}) string {
 	count := len(args)
 	for i := 1; i < count; i+=2 {
