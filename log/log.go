@@ -148,9 +148,9 @@ func (l *Logger) write(level string, msg string, args ...interface{}) {
 		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
 	}
 	if count & 1 == 1 {
-		msg = fmt.Sprintf("%-5s %s	%s	%s=\n", level, time.Now().Format(TimeFormat), msg, args[count-1])
+		msg = fmt.Sprintf("%-5s %s %s	%s=\n", level, time.Now().Format(TimeFormat), msg, args[count-1])
 	} else {
-		msg = fmt.Sprintf("%-5s %s	%s\n", level, time.Now().Format(TimeFormat), msg)
+		msg = fmt.Sprintf("%-5s %s %s\n", level, time.Now().Format(TimeFormat), msg)
 	}
 	l.Lock()
 	l.writer.Write([]byte(msg))
