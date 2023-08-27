@@ -174,7 +174,7 @@ func (l *Logger) Log(level Level, args ...interface{}) {
 
 func (l *Logger) Logf(level Level, msg string, args ...interface{}) {
 	if level < l.level { return }
-	msg = fmt.Sprintf("%-5s %s	%s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
+	msg = fmt.Sprintf("%-5s %s %s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
 	l.Write([]byte(fmt.Sprintf(msg, args...)), false)
 }
 
