@@ -8,8 +8,36 @@ import (
 	"time"
 )
 
-// formatValue formats a value for serialization
+type String interface {
+	String() string
+}
+
+type Hex interface {
+	Hex() string
+}
+
 func Stringify(value interface{}) string {
+	if value == nil {
+		return "nil"
+	}
+	switch v := value.(type) {
+	case string:
+		return v
+	case *string:
+		return *v
+	case String:
+		return v.String()
+	case error:
+		return v.Error()
+	case Hex:
+		return v.Hex()
+	default:
+		return stringify(value)
+	}
+}
+
+// formatValue formats a value for serialization
+func stringify(value interface{}) string {
 	if value == nil {
 		return "nil"
 	}

@@ -91,21 +91,23 @@ func Format(msg string, args ...interface{}) string {
 
 
 func GetStackInfo() string {
-	info := debug.Stack()
+	info := string(debug.Stack())
 	start := 0
 	count := 0
 	for i, token := range info {
 		if token == 0x0A {
 			count++
 			if count == 7 {
-				if i < len(info) {
-					start = i+1
-				}
+				start = i+1
 				break
 			}
 		}
 	}
-	return string(info[start:])
+	if start < len(info) {
+		return info[start:]
+	} else {
+		return info
+	}
 }
 
 func Fatal(msg string, args ...interface{}) {
@@ -132,16 +134,16 @@ func NewLogger(config *LogConfig) *Logger {
 	return logger
 }
 
-const TimeFormat = "2006-01-02 15:04:05.000 MST"
+const TimeFormat = "2006-01-02T15:04:05.000MST"
 func (l *Logger) write(level string, msg string, args ...interface{}) {
 	count := len(args)
 	for i := 1; i < count; i+=2 {
 		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
 	}
 	if count & 1 == 1 {
-		msg = fmt.Sprintf("%-5s %s %s	%s=\n", level, time.Now().Format(TimeFormat), msg, args[count-1])
+		msg = fmt.Sprintf("%-5s|%s %s	%s=\n", level, time.Now().Format(TimeFormat), msg, Stringify(args[count-1]))
 	} else {
-		msg = fmt.Sprintf("%-5s %s %s\n", level, time.Now().Format(TimeFormat), msg)
+		msg = fmt.Sprintf("%-5s|%s %s\n", level, time.Now().Format(TimeFormat), msg)
 	}
 	l.Lock()
 	l.writer.Write([]byte(msg))
@@ -165,7 +167,7 @@ func (l *Logger) Log(level Level, args ...interface{}) {
 
 func (l *Logger) Logf(level Level, msg string, args ...interface{}) {
 	if level < l.level { return }
-	msg = fmt.Sprintf("%-5s %s %s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
+	msg = fmt.Sprintf("%-5s|%s %s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
 	l.Write([]byte(fmt.Sprintf(msg, args...)), false)
 }
 
