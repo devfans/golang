@@ -1,17 +1,13 @@
 package log
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"reflect"
 	"strconv"
 	"time"
 )
-
-type String interface {
-	String() string
-}
-
 type Hex interface {
 	Hex() string
 }
@@ -22,15 +18,19 @@ func Stringify(value interface{}) string {
 	}
 	switch v := value.(type) {
 	case string:
-		return v
+		return escapeString(v)
 	case *string:
-		return *v
-	case String:
-		return v.String()
+		return escapeString(*v)
+	case fmt.Stringer:
+		return escapeString(v.String())
 	case error:
-		return v.Error()
+		return escapeString(v.Error())
 	case Hex:
 		return v.Hex()
+	case []byte:
+		return hex.EncodeToString(v)
+	case *[]byte:
+		return hex.EncodeToString(*v)
 	default:
 		return stringify(value)
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 type LogConfig struct {
+	Level Level
 	MaxSize uint   // max bytes in MB
 	MaxFiles uint  // max log files
 	Path string    // main log file path

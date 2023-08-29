@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 )
@@ -29,6 +30,7 @@ func stringifyLevel(level Level) string {
 }
 
 func ParseLevel(target string) Level {
+	target = strings.ToUpper(target)
 	for level, str := range Levels {
 		if str == target {
 			return Level(level)
@@ -41,7 +43,8 @@ var (
 	// Global handles
 	Root *Logger
 	Output func(Level, string)
-	Log func(Level, ...interface{})
+	Println func(Level, ...interface{})
+	Log func(Level, string, ...interface{})
 	Logf func(Level, string, ...interface{})
 	Json func(Level, interface{})
 	Dump func(Level, interface{})
@@ -55,7 +58,11 @@ func init() {
 
 func Init(config *LogConfig) {
 	Root = NewLogger(config)
-	Root.SetLevel(ParseLevel(os.Getenv("LOG_LEVEL")))
+	level := ParseLevel(os.Getenv("LOG_LEVEL"))
+	if config != nil {
+		level = config.Level
+	}
+	Root.SetLevel(level)
 	applyGlobalHanldes()
 }
 
@@ -68,6 +75,7 @@ func applyGlobalHanldes() {
 	Output  = Root.Output
 	Log     = Root.Log
 	Logf    = Root.Logf
+	Println = Root.Println
 	Trace   = Root.Trace
 	Debug   = Root.Debug
 	Verbose = Root.Verbose
@@ -111,7 +119,7 @@ func GetStackInfo() string {
 }
 
 func Fatal(msg string, args ...interface{}) {
-	Output(ERROR, fmt.Sprintf("Fatal: %s\n%s", Format(msg, args...), GetStackInfo()))
+	Output(ERROR, fmt.Sprintf("FATAL: %s\n%s", Format(msg, args...), GetStackInfo()))
 	os.Exit(2)
 }
 
@@ -151,7 +159,7 @@ func (l *Logger) write(level string, msg string, args ...interface{}) {
 }
 
 func (l *Logger) Fatal(msg string, args ...interface{}) {
-	Output(ERROR, fmt.Sprintf("Fatal: %s\n%s", Format(msg, args...), GetStackInfo()))
+	Output(ERROR, fmt.Sprintf("FATAL: %s\n%s", Format(msg, args...), GetStackInfo()))
 	os.Exit(2)
 }
 
@@ -160,9 +168,18 @@ func (l *Logger) Output(level Level, msg string) {
 	l.Write([]byte(msg), true)
 }
 
-func (l *Logger) Log(level Level, args ...interface{}) {
+func (l *Logger) Log(level Level, msg string, args ...interface{}) {
 	if level < l.level { return }
-	l.Write([]byte(Stringify(args)), true)
+	l.write(stringifyLevel(level), msg, args...)
+}
+
+func (l *Logger) Println(level Level, args ...interface{}) {
+	if level < l.level { return }
+	msg := fmt.Sprintf("%-5s|%s", stringifyLevel(level), time.Now().Format(TimeFormat))
+	for _, arg := range args {
+		msg = fmt.Sprintf("%s	%s", msg, stringify(arg))
+	}
+	l.Write([]byte(msg), true)
 }
 
 func (l *Logger) Logf(level Level, msg string, args ...interface{}) {

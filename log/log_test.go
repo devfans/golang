@@ -1,6 +1,9 @@
 package log
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type Arg struct {
 	B string
@@ -12,11 +15,12 @@ func (a *Arg) String() string {
 }
 
 type B int
-func (b B) Hex() string { return "b hex" }
+func (b B) Hex() string { return "0x3333" }
 
 func TestLogg(t *testing.T) {
-	var b String
-	Info("Checking logging", "a", 1, "b", 2)
+	var b fmt.Stringer
+	var bb []byte
+	Info("Checking logging", "a", 1, "b", 2, "bytes", []byte{0,3,23}, "bytes pointer", &bb, "string pointer", &b, b)
 	SetLevel(DEBUG)
 	Debug("Checking logging", "a", 1, "b", 2)
 	Warn("Checking logging", "a", 1, "b", 2)
@@ -30,8 +34,9 @@ func TestLogg(t *testing.T) {
 	logger.Error("Checking err", "err", new(Arg))
 	logger.Json(ERROR, Arg{"test", 1})
 	logger.Dump(ERROR, Arg{"xxx", 2})
+	Log(ERROR, "This is an error message", "count", 0)
+	Println(ERROR, "This is any args log", 1, 0, 1.0, b)
 	Logf(ERROR, "Check format %s %d ...", "x", 1)
 
-	
 	Fatal("Check fatal", "a", 1, "b", "xxx")
 }
