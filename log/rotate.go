@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
+// Logger config
 type LogConfig struct {
-	Level Level
-	MaxSize uint   // max bytes in MB
-	MaxFiles uint  // max log files
-	Path string    // main log file path
+	// Logger level to use
+	Level    Level
+	MaxSize  uint   // max bytes in MB
+	MaxFiles uint   // max log files
+	Path     string // main log file path
 }
 
+// Provide logger writer instance, nil config will use os.Stderr instead
 func (c *LogConfig) Writer() io.Writer {
 	if c == nil || c.Path == "" {
 		return io.Writer(os.Stderr)
@@ -28,21 +31,23 @@ func (c *LogConfig) Writer() io.Writer {
 	return w
 }
 
+// Create a file writer instance with a log config
 func NewFileWriter(c LogConfig) (w *FileWriter, err error) {
 	w = &FileWriter{LogConfig: c}
 	err = w.Init()
 	return
 }
 
+// FileWriter defines a file writer instance
 type FileWriter struct {
-	LogConfig
+	LogConfig     // Embed the config
 	size, maxSize int
-	file *os.File
-	ch chan bool
+	file          *os.File
+	ch            chan bool
 }
 
-
-func(w *FileWriter) Init() (err error) {
+// Initiate a file writer instance
+func (w *FileWriter) Init() (err error) {
 	w.Path = strings.TrimSpace(w.Path)
 	if w.Path == "" {
 		return fmt.Errorf("invalid log file path")
@@ -53,7 +58,7 @@ func(w *FileWriter) Init() (err error) {
 
 	if w.MaxSize > 0 {
 		w.maxSize = int(w.MaxSize << 20)
-		if uint(w.maxSize >> 20) != w.MaxSize {
+		if uint(w.maxSize>>20) != w.MaxSize {
 			return fmt.Errorf("invalid max log file size")
 		}
 	}
@@ -67,8 +72,9 @@ func(w *FileWriter) Init() (err error) {
 	return
 }
 
+// Implement io.Writer interface for file writer
 func (w *FileWriter) Write(p []byte) (n int, err error) {
-	if w.maxSize > 0 && w.size + len(p) > w.maxSize {
+	if w.maxSize > 0 && w.size+len(p) > w.maxSize {
 		err = w.rotate()
 		if err != nil {
 			fmt.Printf("Failed to rotate log file, path: %s err: %v \n", w.Path, err)
@@ -82,6 +88,7 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
+// Remove stale log files
 func (w *FileWriter) removeLogs() {
 	base := filepath.Base(w.Path)
 	dir := filepath.Dir(w.Path)
@@ -102,6 +109,7 @@ func (w *FileWriter) removeLogs() {
 	}
 }
 
+// Rotate will create new logger files and remove old ones when required
 func (w *FileWriter) rotate() (err error) {
 	if w.file != nil {
 		w.file.Sync()
@@ -125,7 +133,7 @@ func (w *FileWriter) rotate() (err error) {
 	return
 }
 
+// openFile will try to open a log file with desired flags
 func openFile(path string) (f *os.File, err error) {
 	return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
 }
-

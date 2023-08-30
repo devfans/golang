@@ -15,12 +15,13 @@ func (a *Arg) String() string {
 }
 
 type B int
+
 func (b B) Hex() string { return "0x3333" }
 
 func TestLogg(t *testing.T) {
 	var b fmt.Stringer
 	var bb []byte
-	Info("Checking logging", "a", 1, "b", 2, "bytes", []byte{0,3,23}, "bytes pointer", &bb, "string pointer", &b, b)
+	Info("Checking logging", "a", 1, "b", 2, "bytes", []byte{0, 3, 23}, "bytes pointer", &bb, "string pointer", &b, b)
 	SetLevel(DEBUG)
 	Debug("Checking logging", "a", 1, "b", 2)
 	Warn("Checking logging", "a", 1, "b", 2)

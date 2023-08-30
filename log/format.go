@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 )
+
 type Hex interface {
 	Hex() string
 }
