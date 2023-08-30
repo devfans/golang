@@ -60,7 +60,9 @@ var (
 
 	// Global handles for different levels
 	Trace, Debug, Verbose, Info, Warn, Error Handle
-	discard                                  = func(string, ...interface{}) {}
+
+	// default zero handle to discard messages
+	discard = func(string, ...interface{}) {}
 )
 
 func init() {
@@ -147,10 +149,16 @@ type Level int
 
 // Logger defines the logger instance
 type Logger struct {
-	level                                    Level
-	Trace, Debug, Verbose, Info, Warn, Error Handle
-	writer                                   io.Writer
+	// Current logger level
+	level Level
+
+	// Logger writer instance
+	writer io.Writer
+	// Logger writer lock to avoid race conditions
 	sync.Mutex
+
+	// Logger handles
+	Trace, Debug, Verbose, Info, Warn, Error Handle
 }
 
 // Create new logger instance with an optional config
