@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// Default log file flag
+var LogFileFlag int = os.O_WRONLY|os.O_CREATE|os.O_APPEND
+
 // Logger config
 type LogConfig struct {
 	// Logger level to use
@@ -144,5 +147,5 @@ func (w *FileWriter) Close() (err error) {
 
 // openFile will try to open a log file with desired flags
 func openFile(path string) (f *os.File, err error) {
-	return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
+	return os.OpenFile(path, LogFileFlag, 0664)
 }
