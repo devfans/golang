@@ -21,12 +21,12 @@ type LogConfig struct {
 // Provide logger writer instance, nil config will use os.Stderr instead
 func (c *LogConfig) Writer() io.Writer {
 	if c == nil || c.Path == "" {
-		return io.Writer(os.Stderr)
+		return os.Stderr
 	}
 	w, err := NewFileWriter(*c)
 	if err != nil {
 		fmt.Printf("Failed to create file writer, err %v\n", err)
-		return io.Writer(os.Stderr)
+		return os.Stderr
 	}
 	return w
 }
@@ -131,6 +131,15 @@ func (w *FileWriter) rotate() (err error) {
 		}
 	}
 	return
+}
+
+// Close will try to close the file object
+func (w *FileWriter) Close() (err error) {
+	f := w.file
+	if f != nil {
+		return f.Close()
+	}
+	return nil
 }
 
 // openFile will try to open a log file with desired flags
