@@ -39,5 +39,8 @@ func TestLogger(t *testing.T) {
 	Println(ERROR, "This is any args log", 1, 0, 1.0, b)
 	Logf(ERROR, "Check format %s %d ...", "x", 1)
 
+	Assert(false, "a", b)
+	logger.Fatal("check fatal", "a", b)
 	Fatal("Check fatal", "a", 1, "b", "xxx")
+	logger.Assert(false, "b", bb)
 }

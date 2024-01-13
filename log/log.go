@@ -109,20 +109,20 @@ func Format(msg string, args ...interface{}) string {
 		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
 	}
 	if count&1 == 1 {
-		msg = fmt.Sprintf("%s	%s=", msg, args[count-1])
+		msg = fmt.Sprintf("%s	%s=", msg, Stringify(args[count-1]))
 	}
 	return msg
 }
 
 // Dump stack info with hiding logger internal calls
-func GetStackInfo() string {
+func GetStackInfo(omitCalls int) string {
 	info := string(debug.Stack())
 	start := 0
 	count := 0
 	for i, token := range info {
 		if token == 0x0A {
 			count++
-			if count == 7 {
+			if count == omitCalls {
 				start = i + 1
 				break
 			}
@@ -137,7 +137,21 @@ func GetStackInfo() string {
 
 // Fatal will exit the process after the log message is printed with stack info attached
 func Fatal(msg string, args ...interface{}) {
-	Output(ERROR, fmt.Sprintf("FATAL: %s\n%s", Format(msg, args...), GetStackInfo()))
+	Output(ERROR, StackInfo(9, msg, args...))
+	os.Exit(2)
+}
+
+// Append stack info to given message with args
+func StackInfo(omitCalls int, msg string, args ...interface{}) string {
+	return fmt.Sprintf("FATAL[%s] %s\n%s", time.Now().Format(TimeFormat), Format(msg, args...), GetStackInfo(omitCalls))
+}
+
+// Assert a condition, fatal otherwise
+func Assert(check bool, msg string, args ...interface{}) {
+	if check {
+		return
+	}
+	Output(ERROR, StackInfo(9, msg, args...))
 	os.Exit(2)
 }
 
@@ -172,7 +186,7 @@ func NewLogger(config *LogConfig) *Logger {
 }
 
 // Time format used in loggers
-const TimeFormat = "2006-01-02T15:04:05.000MST"
+const TimeFormat = "06-01-02MST15:04:05.000"
 
 // Assemble the log message and write into output
 func (l *Logger) write(level string, msg string, args ...interface{}) {
@@ -181,9 +195,9 @@ func (l *Logger) write(level string, msg string, args ...interface{}) {
 		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
 	}
 	if count&1 == 1 {
-		msg = fmt.Sprintf("%-5s|%s %s	%s=\n", level, time.Now().Format(TimeFormat), msg, Stringify(args[count-1]))
+		msg = fmt.Sprintf("%-5s[%s] %s	%s=\n", level, time.Now().Format(TimeFormat), msg, Stringify(args[count-1]))
 	} else {
-		msg = fmt.Sprintf("%-5s|%s %s\n", level, time.Now().Format(TimeFormat), msg)
+		msg = fmt.Sprintf("%-5s[%s] %s\n", level, time.Now().Format(TimeFormat), msg)
 	}
 	l.Lock()
 	l.writer.Write([]byte(msg))
@@ -192,7 +206,7 @@ func (l *Logger) write(level string, msg string, args ...interface{}) {
 
 // Exit the process after the log message with stack info attached
 func (l *Logger) Fatal(msg string, args ...interface{}) {
-	Output(ERROR, fmt.Sprintf("FATAL: %s\n%s", Format(msg, args...), GetStackInfo()))
+	l.Output(ERROR, StackInfo(9, msg, args...))
 	os.Exit(2)
 }
 
@@ -217,7 +231,7 @@ func (l *Logger) Println(level Level, args ...interface{}) {
 	if level < l.level {
 		return
 	}
-	msg := fmt.Sprintf("%-5s|%s", stringifyLevel(level), time.Now().Format(TimeFormat))
+	msg := fmt.Sprintf("%-5s[%s]", stringifyLevel(level), time.Now().Format(TimeFormat))
 	for _, arg := range args {
 		msg = fmt.Sprintf("%s	%s", msg, stringify(arg))
 	}
@@ -229,8 +243,17 @@ func (l *Logger) Logf(level Level, msg string, args ...interface{}) {
 	if level < l.level {
 		return
 	}
-	msg = fmt.Sprintf("%-5s|%s %s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
+	msg = fmt.Sprintf("%-5s[%s] %s\n", stringifyLevel(level), time.Now().Format(TimeFormat), msg)
 	l.Write([]byte(fmt.Sprintf(msg, args...)), false)
+}
+
+// Assert a condition, fatal otherwise
+func (l *Logger) Assert(check bool, msg string, args ...interface{}) {
+	if check {
+		return
+	}
+	l.Output(ERROR, StackInfo(9, msg, args...))
+	os.Exit(2)
 }
 
 // Dump args as json
