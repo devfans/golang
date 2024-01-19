@@ -21,6 +21,8 @@ func (b B) Hex() string { return "0x3333" }
 func TestLogger(t *testing.T) {
 	var b fmt.Stringer
 	var bb []byte
+	Output(INFO, "xxxxx")
+	Outputf(INFO, "xxx %s %v %d", "str", "v", 1)
 	Info("Checking logging", "a", 1, "b", 2, "bytes", []byte{0, 3, 23}, "bytes pointer", &bb, "string pointer", &b, b)
 	SetLevel(DEBUG)
 	Debug("Checking logging", "a", 1, "b", 2)

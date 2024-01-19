@@ -53,7 +53,7 @@ var (
 	Println func(Level, ...interface{})
 
 	// Output common logs in key=value format or string with args
-	Log, Logf func(Level, string, ...interface{})
+	Log, Logf, Outputf func(Level, string, ...interface{})
 
 	// Dump args details as json string, Dump with indent
 	Json, Dump func(Level, interface{})
@@ -89,6 +89,7 @@ func SetLevel(target Level) {
 
 func applyGlobalHanldes() {
 	Output = Root.Output
+	Outputf = Root.Outputf
 	Log = Root.Log
 	Logf = Root.Logf
 	Println = Root.Println
@@ -216,6 +217,14 @@ func (l *Logger) Output(level Level, msg string) {
 		return
 	}
 	l.Write([]byte(msg), true)
+}
+
+// Output a raw string in format with a custom level, just like fmt.Printf with newline appended
+func (l *Logger) Outputf(level Level, msg string, args ...interface{}) {
+	if level < l.level {
+		return
+	}
+	l.Write([]byte(fmt.Sprintf(msg, args...)), true)
 }
 
 // Output a log with custom level
