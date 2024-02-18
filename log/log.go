@@ -189,6 +189,11 @@ func NewLogger(config *LogConfig) *Logger {
 // Time format used in loggers
 const TimeFormat = "06-01-02MST15:04:05.000"
 
+// Get the current logger level
+func (l *Logger) Level() Level {
+	return l.level
+}
+
 // Assemble the log message and write into output
 func (l *Logger) write(level string, msg string, args ...interface{}) {
 	count := len(args)
