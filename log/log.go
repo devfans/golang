@@ -57,12 +57,17 @@ var (
 
 	// Dump args details as json string, Dump with indent
 	Json, Dump func(Level, interface{})
+	JsonIf, DumpIf(func(bool, Level, interface{}))
 
 	// Global handles for different levels
 	Trace, Debug, Verbose, Info, Warn, Error Handle
 
+	// Global handleIfs for different levels
+	TraceIf, DebugIf, VerboseIf, InfoIf, WarnIf, ErrorIf HandleIf
+
 	// default zero handle to discard messages
 	discard = func(string, ...interface{}) {}
+	discardIf = func(bool, string, ...interface{}) {}
 )
 
 func init() {
@@ -101,6 +106,15 @@ func applyGlobalHanldes() {
 	Error = Root.Error
 	Json = Root.Json
 	Dump = Root.Dump
+
+	TraceIf = Root.TraceIf
+	DebugIf = Root.DebugIf
+	VerboseIf = Root.VerboseIf
+	InfoIf = Root.InfoIf
+	WarnIf = Root.WarnIf
+	ErrorIf = Root.ErrorIf
+	JsonIf = Root.JsonIf
+	DumpIf = Root.DumpIf
 }
 
 // Format log string with args as key=value format
@@ -158,6 +172,7 @@ func Assert(check bool, msg string, args ...interface{}) {
 
 // Log handle interface
 type Handle func(string, ...interface{})
+type HandleIf func(bool, string, ...interface{})
 
 // Log level
 type Level int
@@ -174,6 +189,10 @@ type Logger struct {
 
 	// Logger handles
 	Trace, Debug, Verbose, Info, Warn, Error Handle
+
+	// Logger handleIfs
+	TraceIf, DebugIf, VerboseIf, InfoIf, WarnIf, ErrorIf HandleIf
+	JsonIf, DumpIf func(bool, Level, interface{})
 }
 
 // Create new logger instance with an optional config
@@ -181,6 +200,9 @@ func NewLogger(config *LogConfig) *Logger {
 	logger := &Logger{
 		writer: config.Writer(),
 	}
+	logger.JsonIf = func(ok bool, level Level, v interface{}) { if ok { logger.Json(level, v) } }
+	logger.DumpIf = func(ok bool, level Level, v interface{}) { if ok { logger.Dump(level, v) } }
+
 	// Always set level as info for new logger
 	logger.SetLevel(INFO)
 	return logger
@@ -309,6 +331,11 @@ func (l *Logger) wrap(level string) Handle {
 	return func(msg string, args ...interface{}) { l.write(level, msg, args...) }
 }
 
+// Create a handle with a level string for the logger instance
+func (l *Logger) wrapIf(level string) HandleIf {
+	return func(ok bool, msg string, args ...interface{}) { if ok { l.write(level, msg, args...) } }
+}
+
 // Set a level for a logger instance
 func (l *Logger) SetLevel(target Level) {
 	if target < 0 || target > 5 {
@@ -322,6 +349,14 @@ func (l *Logger) SetLevel(target Level) {
 			*handle = l.wrap(stringifyLevel(Level(i)))
 		} else {
 			*handle = discard
+		}
+	}
+	handleIfs := []*HandleIf{&l.TraceIf, &l.DebugIf, &l.VerboseIf, &l.InfoIf, &l.WarnIf, &l.ErrorIf}
+	for i, handle := range handleIfs {
+		if Level(i) >= target {
+			*handle = l.wrapIf(stringifyLevel(Level(i)))
+		} else {
+			*handle = discardIf
 		}
 	}
 }

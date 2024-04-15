@@ -2,6 +2,7 @@ package log
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -11,6 +12,40 @@ import (
 
 type Hex interface {
 	Hex() string
+}
+
+// Lazy float
+type Float float64
+func(f Float) String() string {
+	return strconv.FormatFloat(float64(f), 'f', -1, 64)
+}
+
+type _Jsonify struct { v interface{} }
+// Jsonify turns a value into Lazy Jsonify
+func Jsonify(v interface{}) _Jsonify {
+	return _Jsonify{ v: &v }
+}
+
+func (v *_Jsonify) String() string {
+	bytes, err := json.Marshal(v.v)
+	if err != nil {
+		bytes = []byte(err.Error())
+	}
+	return string(bytes)
+}
+
+type _Verbosify struct { v interface{} }
+// Verbosify turns a value into Lazy Jsonify with indentations
+func Verbosify(v interface{}) _Verbosify {
+	return _Verbosify{ v: &v }
+}
+
+func (v *_Verbosify) String() string {
+	bytes, err := json.MarshalIndent(v.v, "", "  ")
+	if err != nil {
+		bytes = []byte(err.Error())
+	}
+	return string(bytes)
 }
 
 func Stringify(value interface{}) string {
