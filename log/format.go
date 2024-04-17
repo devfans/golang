@@ -48,6 +48,43 @@ func (v *_Verbosify) String() string {
 	return string(bytes)
 }
 
+func SimpleFormat(value interface{}) string {
+	if value == nil {
+		return "nil"
+	}
+	switch v := value.(type) {
+	case string:
+		return v
+	case *string:
+		return *v
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', 3, 64)
+	case float64:
+		return strconv.FormatFloat(v, 'f', 3, 64)
+	case []byte:
+		return hex.EncodeToString(v)
+	case *[]byte:
+		return hex.EncodeToString(*v)
+	case *big.Int:
+		return formatLogfmtBigInt(v)
+	case big.Int:
+		return formatLogfmtBigInt(&v)
+	case time.Time:
+		// Performance optimization: No need for escaping since the provided
+		// timeFormat doesn't have any escape characters, and escaping is
+		// expensive.
+		return v.Format(TimeFormat)
+	case fmt.Stringer:
+		return v.String()
+	case error:
+		return v.Error()
+	case Hex:
+		return v.Hex()
+	default:
+		return fmt.Sprintf("%+v", v)
+	}
+}
+
 func Stringify(value interface{}) string {
 	if value == nil {
 		return "nil"

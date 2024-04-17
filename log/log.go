@@ -24,6 +24,8 @@ const (
 var (
 	// Log levels as string
 	Levels = [6]string{"TRACE", "DEBUG", "VERBOSE", "INFO", "WARN", "ERROR"}
+
+	FormatValue func(interface{}) string = SimpleFormat
 )
 
 // Format level values into string representation
@@ -121,10 +123,10 @@ func applyGlobalHanldes() {
 func Format(msg string, args ...interface{}) string {
 	count := len(args)
 	for i := 1; i < count; i += 2 {
-		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
+		msg = fmt.Sprintf("%s	%s=%s", msg, FormatValue(args[i-1]), FormatValue(args[i]))
 	}
 	if count&1 == 1 {
-		msg = fmt.Sprintf("%s	%s=", msg, Stringify(args[count-1]))
+		msg = fmt.Sprintf("%s	%s=", msg, FormatValue(args[count-1]))
 	}
 	return msg
 }
@@ -220,10 +222,10 @@ func (l *Logger) Level() Level {
 func (l *Logger) write(level string, msg string, args ...interface{}) {
 	count := len(args)
 	for i := 1; i < count; i += 2 {
-		msg = fmt.Sprintf("%s	%s=%s", msg, Stringify(args[i-1]), Stringify(args[i]))
+		msg = fmt.Sprintf("%s	%s=%s", msg, FormatValue(args[i-1]), FormatValue(args[i]))
 	}
 	if count&1 == 1 {
-		msg = fmt.Sprintf("%-5s[%s] %s	%s=\n", level, time.Now().Format(TimeFormat), msg, Stringify(args[count-1]))
+		msg = fmt.Sprintf("%-5s[%s] %s	%s=\n", level, time.Now().Format(TimeFormat), msg, FormatValue(args[count-1]))
 	} else {
 		msg = fmt.Sprintf("%-5s[%s] %s\n", level, time.Now().Format(TimeFormat), msg)
 	}
@@ -269,7 +271,7 @@ func (l *Logger) Println(level Level, args ...interface{}) {
 	}
 	msg := fmt.Sprintf("%-5s[%s]", stringifyLevel(level), time.Now().Format(TimeFormat))
 	for _, arg := range args {
-		msg = fmt.Sprintf("%s	%s", msg, stringify(arg))
+		msg = fmt.Sprintf("%s	%s", msg, FormatValue(arg))
 	}
 	l.Write([]byte(msg), true)
 }
