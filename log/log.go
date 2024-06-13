@@ -23,7 +23,7 @@ const (
 
 var (
 	// Log levels as string
-	Levels = [6]string{"TRACE", "DEBUG", "VERBOSE", "INFO", "WARN", "ERROR"}
+	Levels = [6]string{"TRACE", "DEBUG", "VERBO", "INFO", "WARN", "ERROR"}
 
 	FormatValue func(interface{}) string = SimpleFormat
 )
